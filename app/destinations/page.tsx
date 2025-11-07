@@ -2,13 +2,16 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowLeft, Search } from "lucide-react"
+import { ArrowLeft, Search, Filter, X, MapPin, Star, Zap, Trees, Landmark, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { DestinationCard } from "@/components/destination-card"
 import { getDestinations } from "@/app/actions/destinations"
+import { getCategories } from "@/app/actions/categories"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 
 interface Destination {
   id: string
@@ -29,26 +32,32 @@ export default function DestinationsPage() {
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all")
   const [ratingFilter, setRatingFilter] = React.useState<number[]>([0])
   const [allDestinations, setAllDestinations] = React.useState<Destination[]>([])
+  const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    fetchDestinations()
-  }, [])
-
-  const fetchDestinations = async () => {
-    try {
-      const result = await getDestinations()
-      if (result.success && result.data) {
-        setAllDestinations(result.data)
-      } else {
-        console.error("Error fetching destinations:", result.error)
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        const [destResult, catResult] = await Promise.all([
+          getDestinations(),
+          getCategories('destination')
+        ])
+        
+        if (destResult.success && destResult.data) {
+          setAllDestinations(destResult.data)
+        }
+        if (catResult.success && catResult.data) {
+          setCategories(catResult.data)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error("Error fetching destinations:", error)
-    } finally {
-      setLoading(false)
     }
-  }
+    loadData()
+  }, [])
 
   const filteredDestinations = allDestinations.filter((destination) => {
     // Search filter
@@ -67,120 +76,197 @@ export default function DestinationsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 md:px-8 lg:px-12 py-8">
-        <div className="flex items-center mb-6">
-          <Link href="/" className="mr-4">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold">Explore All Destinations</h1>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-          <h2 className="text-xl font-semibold mb-4">Filters</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Search */}
-            <div className="space-y-2">
-              <label htmlFor="search" className="text-sm font-medium">
-                Search
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search destinations..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">
+        <div className="bg-gradient-to-b from-emerald-50 to-white min-h-screen">
+          <div className="container mx-auto px-6 md:px-8 lg:px-12 py-12">
+            {/* Header Section */}
+            <div className="mb-12">
+              <div className="flex items-center gap-4 mb-4">
+                <Link href="/">
+                  <Button variant="outline" size="icon" className="rounded-full">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <div>
+                  <h1 className="text-4xl font-bold text-gray-900 mb-2">Explore All Destinations</h1>
+                  <p className="text-gray-600">Discover {allDestinations.length} amazing places to visit in Karawang</p>
+                </div>
               </div>
+              <div className="h-1 w-24 bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full"></div>
             </div>
 
-            {/* Category */}
-            <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium">
-                Category
-              </label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="nature">Nature</SelectItem>
-                  <SelectItem value="historical">Historical</SelectItem>
-                  <SelectItem value="recreational">Recreational</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Rating */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label htmlFor="rating" className="text-sm font-medium">
-                  Minimum Rating
-                </label>
-                <span className="text-sm">{ratingFilter[0].toFixed(1)}</span>
+            {/* Advanced Filters */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 mb-10">
+              <div className="flex items-center gap-2 mb-6">
+                <Filter className="h-5 w-5 text-emerald-600" />
+                <h2 className="text-2xl font-semibold text-gray-900">Advanced Filters</h2>
               </div>
-              <Slider id="rating" min={0} max={5} step={0.1} value={ratingFilter} onValueChange={setRatingFilter} />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Search */}
+                <div className="space-y-2">
+                  <label htmlFor="search" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                    🔍 Search Location
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-3.5 h-5 w-5 text-emerald-600" />
+                    <Input
+                      id="search"
+                      placeholder="Search by name, location..."
+                      className="pl-12 h-11 border-2 border-gray-200 focus:border-emerald-600 rounded-lg"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                  <label htmlFor="category" className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                    <Landmark className="h-4 w-4" /> Category
+                  </label>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger id="category" className="h-11 border-2 border-gray-200 focus:border-emerald-600 rounded-lg">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Rating */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="rating" className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                      ⭐ Min Rating
+                    </label>
+                    <span className="text-lg font-bold text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">
+                      {ratingFilter[0].toFixed(1)}
+                    </span>
+                  </div>
+                  <Slider 
+                    id="rating" 
+                    min={0} 
+                    max={5} 
+                    step={0.1} 
+                    value={ratingFilter} 
+                    onValueChange={setRatingFilter}
+                    className="mt-4"
+                  />
+                </div>
+              </div>
+
+              {/* Active Filters & Reset */}
+              {(searchQuery || categoryFilter !== "all" || ratingFilter[0] > 0) && (
+                <div className="mt-6 pt-6 border-t border-gray-200 flex items-center justify-between">
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <span className="text-sm text-gray-600">Active filters:</span>
+                    {searchQuery && (
+                      <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Search: {searchQuery}
+                      </span>
+                    )}
+                    {categoryFilter !== "all" && (
+                      <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Category: {categoryFilter}
+                      </span>
+                    )}
+                    {ratingFilter[0] > 0 && (
+                      <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                        Rating: ≥ {ratingFilter[0].toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setCategoryFilter("all")
+                      setRatingFilter([0])
+                    }}
+                    className="gap-2"
+                  >
+                    <X className="h-4 w-4" /> Reset
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* Results */}
-        {!loading && (
-          <div className="mb-4">
-            <p className="text-muted-foreground">
-              Showing {filteredDestinations.length} of {allDestinations.length} destinations
-            </p>
-          </div>
-        )}
+            {/* Results Info */}
+            {!loading && (
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <p className="text-gray-700">
+                    <span className="font-bold text-emerald-600 text-lg">{filteredDestinations.length}</span>
+                    <span className="text-gray-600 ml-2">destinations found</span>
+                    {filteredDestinations.length !== allDestinations.length && (
+                      <span className="text-gray-500 ml-2">
+                        (out of {allDestinations.length} total)
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  Popular choice
+                </div>
+              </div>
+            )}
 
-        {/* Destinations Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading destinations...</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDestinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  title={destination.title}
-                  description={destination.description}
-                  image={destination.image}
-                  location={destination.location}
-                  googleMapsLink={destination.google_maps_link}
-                  facilities={destination.facilities}
-                  bestTimeToVisit={destination.best_time_to_visit}
-                  entranceFee={destination.entrance_fee}
-                />
-              ))}
-            </div>
-
-            {filteredDestinations.length === 0 && (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-medium mb-2">No destinations found</h3>
-                <p className="text-muted-foreground mb-4">Try adjusting your filters or search query</p>
+            {/* Destinations Grid */}
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="inline-block">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+                  <p className="text-gray-600 mt-4">Loading amazing destinations...</p>
+                </div>
+              </div>
+            ) : filteredDestinations.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+                <MapPin className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No Destinations Found</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your filters or search query</p>
                 <Button
-                  variant="outline"
                   onClick={() => {
                     setSearchQuery("")
                     setCategoryFilter("all")
                     setRatingFilter([0])
                   }}
+                  className="bg-emerald-600 hover:bg-emerald-700 gap-2"
                 >
-                  Reset Filters
+                  <X className="h-4 w-4" /> Reset Filters
                 </Button>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredDestinations.map((destination) => (
+                  <DestinationCard
+                    key={destination.id}
+                    title={destination.title}
+                    description={destination.description}
+                    image={destination.image}
+                    location={destination.location}
+                    googleMapsLink={destination.google_maps_link}
+                    facilities={destination.facilities}
+                    bestTimeToVisit={destination.best_time_to_visit}
+                    entranceFee={destination.entrance_fee}
+                  />
+                ))}
+              </div>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   )
 }
