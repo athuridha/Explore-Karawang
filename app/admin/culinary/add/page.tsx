@@ -9,8 +9,8 @@ export default function AddCulinaryPage() {
       {/* Align with destination edit layout */}
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Culinary Item</h1>
-          <p className="text-gray-600">Create a new restaurant or dish</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Restaurant</h1>
+          <p className="text-gray-600">Create a new restaurant entry</p>
         </div>
 
         <CulinaryForm />

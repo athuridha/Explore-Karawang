@@ -15,8 +15,8 @@ export default function EditCulinaryPage({ params }: PageProps) {
     <AdminLayout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Culinary Item</h1>
-          <p className="text-gray-600">Update restaurant or dish information</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Restaurant</h1>
+          <p className="text-gray-600">Update restaurant information</p>
         </div>
 
         <Suspense fallback={

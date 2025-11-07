@@ -144,7 +144,7 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
       <div className="xl:col-span-3">
         <Card>
           <CardHeader>
-            <CardTitle>{culinaryId ? "Edit Culinary Item" : "Add New Culinary Item"}</CardTitle>
+            <CardTitle>{culinaryId ? "Edit Restaurant" : "Add New Restaurant"}</CardTitle>
           </CardHeader>
           <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -267,7 +267,7 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
 
           <div className="flex gap-4">
             <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
-              {loading ? "Saving..." : culinaryId ? "Update Item" : "Add Item"}
+              {loading ? "Saving..." : culinaryId ? "Update Restaurant" : "Add Restaurant"}
             </Button>
             <Link href="/admin/culinary">
               <Button type="button" variant="outline">
