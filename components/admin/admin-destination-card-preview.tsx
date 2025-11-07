@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { MapPin, ArrowUpRight, Star, Clock, DollarSign, Wifi, ParkingCircle, Utensils } from "lucide-react"
+import { MapPin, Clock, DollarSign, Star, ArrowUpRight, Check, Edit, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,50 +14,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { DestinationProps } from "@/types"
+import Link from "next/link"
 
-const facilityIcons: Record<string, React.ReactNode> = {
-  parking: <ParkingCircle className="h-4 w-4" />,
-  wifi: <Wifi className="h-4 w-4" />,
-  food: <Utensils className="h-4 w-4" />,
-  restaurant: <Utensils className="h-4 w-4" />,
-  default: <MapPin className="h-4 w-4" />,
+interface AdminDestinationCardPreviewProps {
+  id: string
+  title: string
+  description: string
+  image: string
+  location: string
+  category: string
+  rating: number
+  bestTimeToVisit?: string
+  entranceFee?: string
+  googleMapsLink?: string
+  facilities?: string[]
+  onDelete: (id: string) => void
+  isDeleting?: boolean
 }
 
-function getFacilityIcon(facility: string): React.ReactNode {
-  const lower = facility.toLowerCase()
-  for (const [key, icon] of Object.entries(facilityIcons)) {
-    if (lower.includes(key)) return icon
-  }
-  return facilityIcons.default
-}
-
-export function DestinationCard({ 
-  title, 
-  description, 
-  image, 
-  location, 
-  googleMapsLink, 
-  facilities, 
-  bestTimeToVisit, 
-  entranceFee 
-}: DestinationProps) {
+export function AdminDestinationCardPreview({
+  id,
+  title,
+  description,
+  image,
+  location,
+  category,
+  rating,
+  bestTimeToVisit,
+  entranceFee,
+  googleMapsLink,
+  facilities = [],
+  onDelete,
+  isDeleting = false,
+}: AdminDestinationCardPreviewProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handleGetDirections = () => {
-    if (googleMapsLink) {
-      window.open(googleMapsLink, '_blank')
-    }
-  }
-
-  // Use facilities dari props, atau set default kosong (tidak hardcoded)
   const displayFacilities = facilities && facilities.length > 0 ? facilities : []
 
   return (
     <>
-      <Card className="overflow-hidden flex flex-col h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white cursor-pointer" onClick={() => setOpen(true)}>
+      <Card className="overflow-hidden flex flex-col h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white">
         {/* Image Section */}
-        <div className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-emerald-50 to-blue-50 group">
+        <div 
+          className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-emerald-50 to-blue-50 group cursor-pointer"
+          onClick={() => setOpen(true)}
+        >
           <Image
             src={image || "/placeholder.svg"}
             alt={title}
@@ -68,71 +69,79 @@ export function DestinationCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            4.8
+            {rating}
           </div>
         </div>
 
-        <CardContent className="flex-1 p-5 flex flex-col">
-          {/* Title */}
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2 leading-tight">
-            {title}
-          </h3>
+        <CardContent className="flex-1 p-4 flex flex-col">
+          {/* Title and Category */}
+          <div className="flex items-start justify-between mb-2 gap-2">
+            <h3 className="text-base font-bold text-gray-900 line-clamp-2 flex-1">
+              {title}
+            </h3>
+            <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-semibold whitespace-nowrap">
+              {category}
+            </div>
+          </div>
 
           {/* Location */}
-          <div className="flex items-center gap-1.5 mb-3 text-sm text-gray-600">
+          <div className="flex items-center gap-1.5 mb-2 text-sm text-gray-600">
             <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
             <span className="line-clamp-1">{location}</span>
           </div>
 
           {/* Description */}
-          <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1">
+          <p className="text-sm text-gray-600 line-clamp-2 mb-3 flex-1">
             {description}
           </p>
 
-          {/* Quick Info Row */}
-          {(bestTimeToVisit || entranceFee) && (
-            <div className="flex gap-2 mb-4 text-xs">
-              {bestTimeToVisit && (
-                <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full text-blue-700 font-medium">
-                  <Clock className="h-3 w-3" />
-                  <span className="line-clamp-1">{bestTimeToVisit.split(',')[0]}</span>
-                </div>
-              )}
-              {entranceFee && (
-                <div className="flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full text-emerald-700 font-medium">
-                  <DollarSign className="h-3 w-3" />
-                  <span className="line-clamp-1">{entranceFee}</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Facilities Preview */}
           {displayFacilities.length > 0 && (
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {displayFacilities.slice(0, 3).map((facility, index) => (
+            <div className="flex gap-1 mb-3 flex-wrap">
+              {displayFacilities.slice(0, 2).map((facility, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg"
                 >
-                  {getFacilityIcon(facility)}
-                  <span className="line-clamp-1">{facility}</span>
+                  {facility}
                 </div>
               ))}
+              {displayFacilities.length > 2 && (
+                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">
+                  +{displayFacilities.length - 2} more
+                </div>
+              )}
             </div>
           )}
 
-          {/* Action Button */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen(true)
-            }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
-          >
-            View Details
-            <ArrowUpRight className="h-4 w-4 ml-2" />
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-auto">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(true)
+              }}
+              variant="outline"
+              size="sm"
+              className="flex-1 gap-1"
+            >
+              View Details
+            </Button>
+            <Link href={`/admin/destinations/${id}/edit`} className="flex-1">
+              <Button variant="outline" size="sm" className="w-full gap-1">
+                <Edit className="h-3 w-3" /> Edit
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 border-red-200 text-red-700 hover:bg-red-50"
+              onClick={() => onDelete(id)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -197,9 +206,9 @@ export function DestinationCard({
                   {displayFacilities.map((facility, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200"
                     >
-                      {getFacilityIcon(facility)}
+                      <Check className="h-4 w-4 text-emerald-600" />
                       <span className="text-sm text-gray-700">{facility}</span>
                     </div>
                   ))}
@@ -217,24 +226,12 @@ export function DestinationCard({
             >
               Close
             </Button>
-            {googleMapsLink ? (
-              <a
-                href={googleMapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Get Directions
-                </Button>
-              </a>
-            ) : (
-              <Button className="flex-1 bg-emerald-600" disabled>
-                <MapPin className="h-4 w-4 mr-2" />
-                Get Directions
+            <Link href={`/admin/destinations/${id}/edit`} className="flex-1">
+              <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold gap-2">
+                <Edit className="h-4 w-4" />
+                Edit Details
               </Button>
-            )}
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -10,6 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { addCulinary, updateCulinary, getCulinaryById } from "@/app/actions/culinary"
+import { getCategories } from "@/app/actions/categories"
+import { getFacilityPresets } from "@/app/actions/facilities"
+import { ImageUploadInput } from "@/components/image-upload-input"
 
 interface CulinaryFormProps {
   culinaryId?: string
@@ -24,8 +27,9 @@ interface FormData {
   priceRange: string
   openingHours: string
   specialties: string[]
+  facilities: string[]
   rating: number
-  category: "traditional" | "seafood" | "snack" | "modern"
+  category: string
   googleMapsLink: string
 }
 
@@ -43,10 +47,14 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
     priceRange: "",
     openingHours: "",
     specialties: [],
+    facilities: [],
     rating: 4.5,
-    category: "traditional",
+    category: "",
     googleMapsLink: "",
   })
+  const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
+  const [catLoading, setCatLoading] = React.useState(true)
+  const [availableFacilities, setAvailableFacilities] = React.useState<string[]>([])
 
   const [specialtiesInput, setSpecialtiesInput] = React.useState("")
 
@@ -55,6 +63,25 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
       fetchCulinary()
     }
   }, [culinaryId])
+
+  React.useEffect(() => {
+    const loadData = async () => {
+      setCatLoading(true)
+      const [catRes, facRes] = await Promise.all([
+        getCategories('culinary'),
+        getFacilityPresets('culinary')
+      ])
+      if (catRes.success && catRes.data) {
+        setCategories(catRes.data.map((c: any) => ({ id: c.id, name: c.name })))
+        setFormData(prev => ({ ...prev, category: prev.category || (catRes.data[0]?.name || '') }))
+      }
+      if (facRes.success && facRes.data) {
+        setAvailableFacilities(facRes.data.map((f: any) => f.name))
+      }
+      setCatLoading(false)
+    }
+    loadData()
+  }, [])
 
   const fetchCulinary = async () => {
     if (!culinaryId) return
@@ -72,6 +99,7 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
         priceRange: d.price_range || "",
         openingHours: d.opening_hours || "",
         specialties: d.specialties || [],
+        facilities: d.facilities || [],
         rating: d.rating,
         category: d.category,
         googleMapsLink: d.google_maps_link || "",
@@ -92,9 +120,15 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
   }
 
   const handleCategoryChange = (value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({ ...prev, category: value }))
+  }
+
+  const handleFacilityToggle = (facility: string) => {
+    setFormData(prev => ({
       ...prev,
-      category: value as "traditional" | "seafood" | "snack" | "modern",
+      facilities: prev.facilities.includes(facility)
+        ? prev.facilities.filter(f => f !== facility)
+        : [...prev.facilities, facility]
     }))
   }
 
@@ -175,25 +209,30 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Category</label>
-              <Select value={formData.category} onValueChange={handleCategoryChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="traditional">Traditional</SelectItem>
-                  <SelectItem value="seafood">Seafood</SelectItem>
-                  <SelectItem value="snack">Snack</SelectItem>
-                  <SelectItem value="modern">Modern</SelectItem>
-                </SelectContent>
-              </Select>
+              {catLoading ? (
+                <div className="text-sm text-muted-foreground">Loading categories...</div>
+              ) : categories.length === 0 ? (
+                <div className="text-sm text-red-500">No categories. Create one first.</div>
+              ) : (
+                <Select value={formData.category} onValueChange={handleCategoryChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(c => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Image URL</label>
-              <Input
-                name="image"
+              <ImageUploadInput
+                label="Image"
                 value={formData.image}
-                onChange={handleInputChange}
-                placeholder="https://example.com/image.jpg"
+                onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                placeholder="Upload or paste image URL"
+                required
               />
             </div>
           </div>
@@ -250,6 +289,29 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
               placeholder="e.g. Nasi Jamblang Komplit, Ayam Goreng Jamblang, Tahu Tempe Bacem"
               rows={2}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Facilities</label>
+            {availableFacilities.length === 0 ? (
+              <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded text-sm">
+                No facilities available. Please add some in <a href="/admin/settings" className="font-semibold underline">Settings</a>.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {availableFacilities.map((facility) => (
+                  <label key={facility} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.facilities.includes(facility)}
+                      onChange={() => handleFacilityToggle(facility)}
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm">{facility}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>

@@ -13,16 +13,18 @@ export interface CulinaryInput {
   openingHours: string
   specialties: string[]
   rating: number
-  category: "traditional" | "seafood" | "snack" | "modern"
+  category: string // dynamic
   googleMapsLink?: string
+  categoryId?: string
+  facilities?: string[]
 }
 
 export async function addCulinary(data: CulinaryInput) {
   try {
     const id = crypto.randomUUID()
     await query(
-      `INSERT INTO culinary (id, title, description, image, restaurant, location, price_range, opening_hours, specialties, rating, category, google_maps_link)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO culinary (id, title, description, image, restaurant, location, price_range, opening_hours, specialties, rating, category, google_maps_link, category_id, facilities)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.title,
@@ -36,10 +38,12 @@ export async function addCulinary(data: CulinaryInput) {
         data.rating,
         data.category,
         data.googleMapsLink || null,
+        data.categoryId || null,
+        JSON.stringify(data.facilities ?? []),
       ]
     )
     const rows = await query<any>("SELECT * FROM culinary WHERE id = ?", [id])
-    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties) }))
+    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties), facilities: safeParseJson(r.facilities) }))
     return { success: true, data: normalized }
   } catch (error) {
     return { success: false, error: String(error) }
@@ -50,7 +54,7 @@ export async function updateCulinary(id: string, data: CulinaryInput) {
   try {
     await query(
       `UPDATE culinary
-         SET title=?, description=?, image=?, restaurant=?, location=?, price_range=?, opening_hours=?, specialties=?, rating=?, category=?, google_maps_link=?
+         SET title=?, description=?, image=?, restaurant=?, location=?, price_range=?, opening_hours=?, specialties=?, rating=?, category=?, google_maps_link=?, category_id=?, facilities=?
        WHERE id=?`,
       [
         data.title,
@@ -64,11 +68,13 @@ export async function updateCulinary(id: string, data: CulinaryInput) {
         data.rating,
         data.category,
         data.googleMapsLink || null,
+        data.categoryId || null,
+        JSON.stringify(data.facilities ?? []),
         id,
       ]
     )
     const rows = await query<any>("SELECT * FROM culinary WHERE id = ?", [id])
-    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties) }))
+    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties), facilities: safeParseJson(r.facilities) }))
     return { success: true, data: normalized }
   } catch (error) {
     return { success: false, error: String(error) }
@@ -87,7 +93,7 @@ export async function deleteCulinary(id: string) {
 export async function getCulinaryItems() {
   try {
     const rows = await query<any>("SELECT * FROM culinary ORDER BY created_at DESC")
-    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties) }))
+    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties), facilities: safeParseJson(r.facilities) }))
     return { success: true, data: normalized }
   } catch (error) {
     return { success: false, error: String(error) }
@@ -99,7 +105,7 @@ export async function getCulinaryById(id: string) {
     const rows = await query<any>("SELECT * FROM culinary WHERE id = ? LIMIT 1", [id])
     if (rows.length === 0) return { success: true, data: null }
     const r = rows[0]
-    return { success: true, data: { ...r, specialties: safeParseJson(r.specialties) } }
+    return { success: true, data: { ...r, specialties: safeParseJson(r.specialties), facilities: safeParseJson(r.facilities) } }
   } catch (error) {
     return { success: false, error: String(error) }
   }

@@ -8,20 +8,21 @@ export interface DestinationInput {
   description: string
   image: string
   location: string
-  category: "nature" | "historical" | "recreational"
+  category: string // dynamic category name
   facilities: string[]
   bestTimeToVisit: string
   entranceFee: string
   rating: number
   googleMapsLink?: string
+  categoryId?: string // optional reference to categories table
 }
 
 export async function addDestination(data: DestinationInput) {
   try {
     const id = crypto.randomUUID()
     await query(
-      `INSERT INTO destinations (id, title, description, image, location, category, facilities, best_time_to_visit, entrance_fee, rating, google_maps_link)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO destinations (id, title, description, image, location, category, facilities, best_time_to_visit, entrance_fee, rating, google_maps_link, category_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.title,
@@ -34,6 +35,7 @@ export async function addDestination(data: DestinationInput) {
         data.entranceFee,
         data.rating,
         data.googleMapsLink || null,
+        data.categoryId || null,
       ]
     )
     const rows = await query<any>("SELECT * FROM destinations WHERE id = ?", [id])
@@ -51,7 +53,7 @@ export async function updateDestination(id: string, data: DestinationInput) {
   try {
     await query(
       `UPDATE destinations
-         SET title=?, description=?, image=?, location=?, category=?, facilities=?, best_time_to_visit=?, entrance_fee=?, rating=?, google_maps_link=?
+         SET title=?, description=?, image=?, location=?, category=?, facilities=?, best_time_to_visit=?, entrance_fee=?, rating=?, google_maps_link=?, category_id=?
        WHERE id=?`,
       [
         data.title,
@@ -64,6 +66,7 @@ export async function updateDestination(id: string, data: DestinationInput) {
         data.entranceFee,
         data.rating,
         data.googleMapsLink || null,
+        data.categoryId || null,
         id,
       ]
     )

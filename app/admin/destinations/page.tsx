@@ -2,12 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Plus, Edit, Trash2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { getDestinations, deleteDestination } from "@/app/actions/destinations"
 import { AdminLayout } from "@/components/admin/admin-layout"
+import { AdminDestinationCardPreview } from "@/components/admin/admin-destination-card-preview"
 
 interface Destination {
   id: string
@@ -17,6 +17,10 @@ interface Destination {
   location: string
   rating: number
   image: string
+  bestTimeToVisit?: string
+  entranceFee?: string
+  googleMapsLink?: string
+  facilities?: string[]
 }
 
 export default function DestinationsPage() {
@@ -41,6 +45,10 @@ export default function DestinationsPage() {
           location: d.location,
           rating: d.rating,
           image: d.image,
+          bestTimeToVisit: d.bestTimeToVisit,
+          entranceFee: d.entranceFee,
+          googleMapsLink: d.googleMapsLink,
+          facilities: d.facilities,
         })),
       )
     }
@@ -60,17 +68,8 @@ export default function DestinationsPage() {
     setDeleting(null)
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "nature":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "historical":
-        return "bg-blue-100 text-blue-800 border-blue-200"
-      case "recreational":
-        return "bg-purple-100 text-purple-800 border-purple-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
+  if (loading) {
+    return <div className="text-center py-8">Loading destinations...</div>
   }
 
   return (
@@ -113,69 +112,24 @@ export default function DestinationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {destinations.map((destination) => (
-            <Card key={destination.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  {destination.image && (
-                    <div className="w-full md:w-56 h-56 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={destination.image || "/placeholder.svg"}
-                        alt={destination.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-1">
-                          {destination.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 flex items-center gap-1">
-                          📍 {destination.location}
-                        </p>
-                      </div>
-                      <Badge className={getCategoryColor(destination.category)} variant="outline">
-                        {destination.category}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-sm text-gray-700 mb-4 line-clamp-3">
-                      {destination.description}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 mb-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-gray-900">Rating:</span>
-                        <span className="text-yellow-600 font-semibold">
-                          {destination.rating} ⭐
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Link href={`/admin/destinations/${destination.id}/edit`} className="flex-1">
-                        <Button variant="outline" className="w-full gap-2" size="sm">
-                          <Edit className="h-4 w-4" /> Edit Details
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        className="flex-1 gap-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
-                        size="sm"
-                        onClick={() => handleDelete(destination.id)}
-                        disabled={deleting === destination.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        {deleting === destination.id ? "Deleting..." : "Delete"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AdminDestinationCardPreview
+              key={destination.id}
+              id={destination.id}
+              title={destination.title}
+              description={destination.description}
+              image={destination.image}
+              location={destination.location}
+              category={destination.category}
+              rating={destination.rating}
+              bestTimeToVisit={destination.bestTimeToVisit}
+              entranceFee={destination.entranceFee}
+              googleMapsLink={destination.googleMapsLink}
+              facilities={destination.facilities}
+              onDelete={handleDelete}
+              isDeleting={deleting === destination.id}
+            />
           ))}
         </div>
       )}

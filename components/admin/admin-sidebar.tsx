@@ -11,14 +11,17 @@ import {
   X,
   Computer,
   ImageIcon,
+  Tags,
+  ChevronDown,
+  Settings,
 } from "lucide-react"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 
 interface NavItem {
-  href: string
+  href?: string
   label: string
   icon: React.ReactNode
+  children?: NavItem[]
 }
 
 const navItems: NavItem[] = [
@@ -33,20 +36,152 @@ const navItems: NavItem[] = [
     icon: <ImageIcon className="w-5 h-5" />,
   },
   {
-    href: "/admin/destinations",
     label: "Destinations",
     icon: <MapPin className="w-5 h-5" />,
+    children: [
+      {
+        href: "/admin/destinations",
+        label: "All Destinations",
+        icon: <MapPin className="w-4 h-4" />,
+      },
+      {
+        href: "/admin/destinations/categories",
+        label: "Categories",
+        icon: <Tags className="w-4 h-4" />,
+      },
+    ],
   },
   {
-    href: "/admin/culinary",
     label: "Culinary",
     icon: <UtensilsCrossed className="w-5 h-5" />,
+    children: [
+      {
+        href: "/admin/culinary",
+        label: "All Restaurants",
+        icon: <UtensilsCrossed className="w-4 h-4" />,
+      },
+      {
+        href: "/admin/culinary/categories",
+        label: "Categories",
+        icon: <Tags className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    href: "/admin/settings",
+    label: "Settings",
+    icon: <Settings className="w-5 h-5" />,
   },
 ]
+
+function NavItemComponent({
+  item,
+  isExpanded,
+  onToggle,
+  isActive,
+  onNavigate,
+  pathname,
+}: {
+  item: NavItem
+  isExpanded: boolean
+  onToggle: () => void
+  isActive: boolean
+  onNavigate: () => void
+  pathname: string
+}) {
+  const hasChildren = item.children && item.children.length > 0
+
+  if (hasChildren) {
+    return (
+      <div>
+        <button
+          onClick={onToggle}
+          className={cn(
+            "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+            isActive
+              ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/50"
+              : "text-slate-300 hover:bg-slate-700 hover:text-white"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            {item.icon}
+            <span className="font-medium text-sm">{item.label}</span>
+          </div>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 transition-transform duration-200",
+              isExpanded ? "rotate-180" : ""
+            )}
+          />
+        </button>
+        {isExpanded && (
+          <div className="mt-1 space-y-1 ml-2 pl-4 border-l border-slate-700">
+            {item.children && item.children.map((child) => (
+              <Link
+                key={child.href}
+                href={child.href || "#"}
+                onClick={onNavigate}
+              >
+                <div
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm",
+                    pathname === child.href
+                      ? "bg-emerald-500/20 text-emerald-300 border-l-2 border-emerald-400"
+                      : "text-slate-400 hover:bg-slate-700/50 hover:text-slate-200"
+                  )}
+                >
+                  {child.icon}
+                  <span className="font-medium">{child.label}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <Link href={item.href || "#"} onClick={onNavigate}>
+      <button
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+          isActive
+            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/50"
+            : "text-slate-300 hover:bg-slate-700 hover:text-white"
+        )}
+      >
+        {item.icon}
+        <span className="font-medium text-sm">{item.label}</span>
+      </button>
+    </Link>
+  )
+}
 
 export function AdminSidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+
+  const toggleExpand = (label: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(label)) {
+      newExpanded.delete(label)
+    } else {
+      newExpanded.add(label)
+    }
+    setExpandedItems(newExpanded)
+  }
+
+  const checkIfActive = (item: NavItem): boolean => {
+    if (item.href) {
+      return item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href)
+    }
+    if (item.children) {
+      return item.children.some((child) => pathname === child.href || (child.href && pathname.startsWith(child.href)))
+    }
+    return false
+  }
 
   return (
     <>
@@ -81,28 +216,17 @@ export function AdminSidebar() {
 
         {/* Navigation Items */}
         <nav className="flex-1 px-4 py-6 space-y-2">
-          {navItems.map((item) => {
-            // Exact match for dashboard, startsWith for others
-            const isActive = item.href === "/admin" 
-              ? pathname === "/admin"
-              : pathname.startsWith(item.href)
-
-            return (
-              <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)}>
-                <button
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
-                    isActive
-                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/50"
-                      : "text-slate-300 hover:bg-slate-700 hover:text-white"
-                  )}
-                >
-                  {item.icon}
-                  <span className="font-medium text-sm">{item.label}</span>
-                </button>
-              </Link>
-            )
-          })}
+          {navItems.map((item) => (
+            <NavItemComponent
+              key={item.label}
+              item={item}
+              isExpanded={expandedItems.has(item.label)}
+              onToggle={() => toggleExpand(item.label)}
+              isActive={checkIfActive(item)}
+              onNavigate={() => setIsOpen(false)}
+              pathname={pathname}
+            />
+          ))}
         </nav>
 
         {/* Footer Info */}

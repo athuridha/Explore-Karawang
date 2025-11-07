@@ -1,12 +1,27 @@
-/** @type {import('next').NextConfig} */
+/** @type {import('next).NextConfig} */
 const nextConfig = {
 	images: {
-		// Allow external images used in cards and previews
 		remotePatterns: [
+			// Allow local uploads
+			{
+				protocol: 'http',
+				hostname: 'localhost',
+				pathname: '/uploads/**',
+			},
+			{
+				protocol: 'http',
+				hostname: '127.0.0.1',
+				pathname: '/uploads/**',
+			},
+			// Allow any HTTPS external images
 			{
 				protocol: 'https',
-				hostname: 'blue.kumparan.com',
-				pathname: '/**',
+				hostname: '**',
+			},
+			// Allow any HTTP external images
+			{
+				protocol: 'http',
+				hostname: '**',
 			},
 		],
 	},

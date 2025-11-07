@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DestinationCard } from "@/components/destination-card"
 import { getDestinations } from "@/app/actions/destinations"
+import { getCategoryCounts, ensureSeedCategories } from "@/app/actions/categories"
 
 interface Destination {
   id: string
@@ -15,7 +16,7 @@ interface Destination {
   description: string
   image: string
   location: string
-  category: "nature" | "historical" | "recreational"
+  category: string
   google_maps_link?: string
   facilities?: string[]
   best_time_to_visit?: string
@@ -25,11 +26,14 @@ interface Destination {
 export function DestinationsSection() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [allDestinations, setAllDestinations] = React.useState<Destination[]>([])
+  const [categories, setCategories] = React.useState<{ name: string; slug: string; count: number }[]>([])
+  const [activeTab, setActiveTab] = React.useState<string>('all')
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     fetchDestinations()
+    fetchCategories()
   }, [])
 
   const fetchDestinations = async () => {
@@ -51,16 +55,28 @@ export function DestinationsSection() {
     }
   }
 
-  const filteredDestinations = allDestinations.filter(
-    (dest) =>
+  const fetchCategories = async () => {
+    try {
+      // Seed legacy categories into table if empty
+      await ensureSeedCategories()
+      const res = await getCategoryCounts('destination')
+      if (res.success && res.data) {
+        setCategories(res.data.map((c: any) => ({ name: c.name, slug: c.slug, count: c.item_count })))
+      }
+    } catch (err) {
+      console.error('Failed to load categories', err)
+    }
+  }
+
+  const filteredDestinations = allDestinations.filter(dest => {
+    const matchesSearch =
       dest.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dest.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dest.location.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
-
-  const natureDestinations = filteredDestinations.filter((dest) => dest.category === "nature").slice(0, 3)
-  const historicalDestinations = filteredDestinations.filter((dest) => dest.category === "historical").slice(0, 4)
-  const recreationalDestinations = filteredDestinations.filter((dest) => dest.category === "recreational").slice(0, 3)
+      dest.location.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesCategory = activeTab === 'all' || dest.category === activeTab
+    return matchesSearch && matchesCategory
+  })
+  const topDestinations = filteredDestinations.slice(0, 9)
 
   if (loading) {
     return (
@@ -114,18 +130,18 @@ export function DestinationsSection() {
           </div>
         </div>
 
-        <Tabs defaultValue="nature" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex justify-center mb-8">
-            <TabsList>
-              <TabsTrigger value="nature">Nature</TabsTrigger>
-              <TabsTrigger value="historical">Historical</TabsTrigger>
-              <TabsTrigger value="recreational">Recreational</TabsTrigger>
+            <TabsList className="flex flex-wrap">
+              <TabsTrigger value="all">All ({allDestinations.length})</TabsTrigger>
+              {categories.map(cat => (
+                <TabsTrigger key={cat.slug} value={cat.name}>{cat.name} ({cat.count})</TabsTrigger>
+              ))}
             </TabsList>
           </div>
-
-          <TabsContent value="nature" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-4 md:mx-6">
-            {natureDestinations.length > 0 ? (
-              natureDestinations.map((destination) => (
+          <TabsContent value={activeTab} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-4 md:mx-6">
+            {topDestinations.length > 0 ? (
+              topDestinations.map(destination => (
                 <DestinationCard
                   key={destination.id}
                   title={destination.title}
@@ -140,54 +156,7 @@ export function DestinationsSection() {
               ))
             ) : (
               <div className="col-span-3 text-center py-8">
-                <p className="text-muted-foreground">No nature destinations found matching your search.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="historical" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-4 md:mx-6">
-            {historicalDestinations.length > 0 ? (
-              historicalDestinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  title={destination.title}
-                  description={destination.description}
-                  image={destination.image}
-                  location={destination.location}
-                  googleMapsLink={destination.google_maps_link}
-                  facilities={destination.facilities}
-                  bestTimeToVisit={destination.best_time_to_visit}
-                  entranceFee={destination.entrance_fee}
-                />
-              ))
-            ) : (
-              <div className="col-span-3 text-center py-8">
-                <p className="text-muted-foreground">No historical destinations found matching your search.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent
-            value="recreational"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-4 md:mx-6"
-          >
-            {recreationalDestinations.length > 0 ? (
-              recreationalDestinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  title={destination.title}
-                  description={destination.description}
-                  image={destination.image}
-                  location={destination.location}
-                  googleMapsLink={destination.google_maps_link}
-                  facilities={destination.facilities}
-                  bestTimeToVisit={destination.best_time_to_visit}
-                  entranceFee={destination.entrance_fee}
-                />
-              ))
-            ) : (
-              <div className="col-span-3 text-center py-8">
-                <p className="text-muted-foreground">No recreational destinations found matching your search.</p>
+                <p className="text-muted-foreground">No destinations found for this category.</p>
               </div>
             )}
           </TabsContent>

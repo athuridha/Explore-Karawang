@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { addCarouselSlide, updateCarouselSlide, getCarouselSlideById } from "@/app/actions/carousel"
+import { ImageUploadInput } from "@/components/image-upload-input"
 
 interface CarouselFormProps {
   slideId?: string
@@ -162,12 +163,12 @@ export function CarouselForm({ slideId }: CarouselFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Image URL</label>
-            <Input
-              name="image"
+            <ImageUploadInput
+              label="Image"
               value={formData.image}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+              placeholder="Upload or paste image URL"
+              required
             />
           </div>
 

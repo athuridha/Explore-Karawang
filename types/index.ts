@@ -7,6 +7,7 @@ export interface DestinationProps {
   facilities?: string[]
   bestTimeToVisit?: string
   entranceFee?: string
+  category?: string // now dynamic from categories admin
 }
 
 export interface CulinaryProps {
@@ -15,10 +16,19 @@ export interface CulinaryProps {
   image: string
   restaurant: string
   rating: number
-  category?: string
+  category?: string // dynamic category name
   location?: string
   priceRange?: string
   openingHours?: string
   specialties?: string[]
+  facilities?: string[]
   googleMapsLink?: string
+}
+
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  type: 'destination' | 'culinary'
+  created_at?: string
 }

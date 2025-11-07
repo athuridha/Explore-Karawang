@@ -1,6 +1,8 @@
-import Image from "next/image"
+"use client"
+
 import * as React from "react"
-import { ExternalLink, Star, Utensils, MapPin, Clock, DollarSign, Flame, ArrowUpRight, Check } from "lucide-react"
+import Image from "next/image"
+import { MapPin, Clock, DollarSign, Star, Check, Edit, Trash2, Flame } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,40 +14,57 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { CulinaryProps } from "@/types"
+import Link from "next/link"
 
-export function CulinaryCard({
+interface AdminCulinaryCardPreviewProps {
+  id: string
+  title: string
+  description: string
+  image: string
+  restaurant: string
+  location: string
+  category: string
+  rating: number
+  priceRange?: string
+  openingHours?: string
+  specialties?: string[]
+  googleMapsLink?: string
+  facilities?: string[]
+  onDelete: (id: string) => void
+  isDeleting?: boolean
+}
+
+export function AdminCulinaryCardPreview({
+  id,
   title,
   description,
   image,
   restaurant,
-  rating,
-  category,
   location,
+  category,
+  rating,
   priceRange,
   openingHours,
-  specialties,
+  specialties = [],
   googleMapsLink,
-  facilities,
-}: CulinaryProps) {
+  facilities = [],
+  onDelete,
+  isDeleting = false,
+}: AdminCulinaryCardPreviewProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handleFindRestaurant = () => {
-    if (googleMapsLink) {
-      window.open(googleMapsLink, '_blank')
-    }
-  }
-
-  // Use facilities dari props, atau set default kosong (tidak hardcoded)
   const displayFacilities = facilities && facilities.length > 0 ? facilities : []
 
   return (
     <>
-      <Card className="overflow-hidden flex flex-col h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white cursor-pointer" onClick={() => setOpen(true)}>
+      <Card className="overflow-hidden flex flex-col h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-white">
         {/* Image Section */}
-        <div className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-orange-50 to-red-50 group">
+        <div 
+          className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-orange-50 to-red-50 group cursor-pointer"
+          onClick={() => setOpen(true)}
+        >
           <Image
-            src={image || "/placeholder.svg?height=224&width=400&query=culinary"}
+            src={image || "/placeholder.svg"}
             alt={restaurant || title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -56,7 +75,7 @@ export function CulinaryCard({
           {/* Rating Badge */}
           <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            {rating || 4.5}
+            {rating}
           </div>
 
           {/* Category Badge */}
@@ -67,73 +86,86 @@ export function CulinaryCard({
           )}
         </div>
 
-        <CardContent className="flex-1 p-5 flex flex-col">
+        <CardContent className="flex-1 p-4 flex flex-col">
           {/* Restaurant Name */}
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-1 leading-tight">
+          <h3 className="text-base font-bold text-gray-900 line-clamp-1 mb-1">
             {restaurant || title}
           </h3>
 
           {/* Dish/Title */}
           {title && title !== restaurant && (
-            <div className="flex items-center gap-1 mb-3 text-xs text-orange-700 font-semibold bg-orange-50 px-2 py-1 rounded-full w-fit">
-              <Utensils className="h-3 w-3" />
+            <div className="flex items-center gap-1 mb-2 text-xs text-orange-700 font-semibold bg-orange-50 px-2 py-1 rounded-full w-fit">
               {title}
             </div>
           )}
 
           {/* Location */}
-          <div className="flex items-center gap-1.5 mb-3 text-sm text-gray-600">
+          <div className="flex items-center gap-1.5 mb-2 text-sm text-gray-600">
             <MapPin className="h-4 w-4 text-emerald-600 flex-shrink-0" />
             <span className="line-clamp-1">{location}</span>
           </div>
 
           {/* Description */}
-          <p className="text-sm text-gray-600 line-clamp-2 mb-4 flex-1">
+          <p className="text-sm text-gray-600 line-clamp-2 mb-3 flex-1">
             {description}
           </p>
 
-          {/* Quick Info Row */}
-          <div className="flex gap-2 mb-4 text-xs flex-wrap">
-            {priceRange && (
-              <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full text-blue-700 font-medium">
-                <DollarSign className="h-3 w-3" />
-                <span className="line-clamp-1">{priceRange}</span>
-              </div>
-            )}
-            {openingHours && (
-              <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full text-purple-700 font-medium">
-                <Clock className="h-3 w-3" />
-                <span className="line-clamp-1">{openingHours}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Specialties Preview */}
-          {specialties && specialties.length > 0 && (
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {specialties.slice(0, 2).map((specialty, index) => (
+          {/* Specialties & Facilities Preview */}
+          {(specialties.length > 0 || displayFacilities.length > 0) && (
+            <div className="flex gap-1 mb-3 flex-wrap">
+              {specialties.slice(0, 1).map((specialty, index) => (
                 <div
-                  key={index}
-                  className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2.5 py-1.5 rounded-lg hover:bg-red-200 transition-colors"
+                  key={`sp-${index}`}
+                  className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-lg font-medium"
                 >
-                  <Flame className="h-3 w-3" />
-                  <span className="line-clamp-1">{specialty}</span>
+                  <Flame className="h-2.5 w-2.5 inline mr-1" />
+                  {specialty}
                 </div>
               ))}
+              {displayFacilities.slice(0, 1).map((facility, index) => (
+                <div
+                  key={`fac-${index}`}
+                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg"
+                >
+                  {facility}
+                </div>
+              ))}
+              {(specialties.length + displayFacilities.length > 2) && (
+                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">
+                  +{specialties.length + displayFacilities.length - 2} more
+                </div>
+              )}
             </div>
           )}
 
-          {/* Action Button */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen(true)
-            }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
-          >
-            View Details
-            <ArrowUpRight className="h-4 w-4 ml-2" />
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-auto">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(true)
+              }}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              View Details
+            </Button>
+            <Link href={`/admin/culinary/${id}/edit`} className="flex-1">
+              <Button variant="outline" size="sm" className="w-full gap-1">
+                <Edit className="h-3 w-3" /> Edit
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 border-red-200 text-red-700 hover:bg-red-50"
+              onClick={() => onDelete(id)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -150,7 +182,7 @@ export function CulinaryCard({
           {/* Full Image */}
           <div className="relative h-72 w-full rounded-xl overflow-hidden">
             <Image 
-              src={image || "/placeholder.svg?height=224&width=400&query=culinary"} 
+              src={image || "/placeholder.svg"} 
               alt={restaurant || title} 
               fill 
               className="object-cover" 
@@ -193,7 +225,7 @@ export function CulinaryCard({
                 {category && (
                   <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
                     <div className="flex items-center gap-2 mb-2">
-                      <Utensils className="h-5 w-5 text-emerald-600" />
+                      <Flame className="h-5 w-5 text-emerald-600" />
                       <h4 className="font-semibold text-gray-900">Category</h4>
                     </div>
                     <p className="text-sm text-gray-700 capitalize font-medium">{category}</p>
@@ -222,7 +254,7 @@ export function CulinaryCard({
                   {specialties.map((specialty, index) => (
                     <div
                       key={index}
-                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200 hover:border-red-400 transition-all"
+                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200"
                     >
                       <p className="text-sm text-gray-700 font-medium">{specialty}</p>
                     </div>
@@ -242,7 +274,7 @@ export function CulinaryCard({
                   {displayFacilities.map((facility, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200"
                     >
                       <Check className="h-4 w-4 text-emerald-600" />
                       <span className="text-sm text-gray-700">{facility}</span>
@@ -262,24 +294,12 @@ export function CulinaryCard({
             >
               Close
             </Button>
-            {googleMapsLink ? (
-              <a
-                href={googleMapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Find Restaurant
-                </Button>
-              </a>
-            ) : (
-              <Button className="flex-1 bg-emerald-600" disabled>
-                <MapPin className="h-4 w-4 mr-2" />
-                Find Restaurant
+            <Link href={`/admin/culinary/${id}/edit`} className="flex-1">
+              <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold gap-2">
+                <Edit className="h-4 w-4" />
+                Edit Details
               </Button>
-            )}
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>
