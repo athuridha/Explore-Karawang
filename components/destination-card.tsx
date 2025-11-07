@@ -84,11 +84,15 @@ export function DestinationCard({ title, description, image, location, googleMap
             </div>
             <div className="space-y-2">
               <h4 className="font-medium">Best Time to Visit:</h4>
-              <p>{bestTimeToVisit || "Weekdays, 8:00 AM - 4:00 PM to avoid crowds"}</p>
+              {bestTimeToVisit ? (
+                <p>{bestTimeToVisit}</p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <h4 className="font-medium">Entrance Fee:</h4>
-              <p>{entranceFee || "Rp 10.000 - Rp 25.000 per person"}</p>
+              {entranceFee ? (
+                <p>{entranceFee}</p>
+              ) : null}
             </div>
           </div>
           <DialogFooter>

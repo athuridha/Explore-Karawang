@@ -44,10 +44,20 @@ export function CulinaryCard({
         )}
       </div>
       <CardHeader>
-        <CardTitle className="line-clamp-2">{title}</CardTitle>
-        <CardDescription className="flex items-center gap-1">
-          <Utensils className="h-4 w-4 flex-shrink-0" /> {restaurant}
-        </CardDescription>
+        <CardTitle className="line-clamp-2">{restaurant}</CardTitle>
+        {(title || location) && (
+          <CardDescription className="flex items-center gap-1">
+            {title ? (
+              <>
+                <Utensils className="h-4 w-4 flex-shrink-0" /> {title}
+              </>
+            ) : (
+              <>
+                <MapPin className="h-4 w-4 flex-shrink-0" /> {location}
+              </>
+            )}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>

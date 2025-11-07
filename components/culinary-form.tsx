@@ -110,6 +110,7 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
 
     const submitData = {
       ...formData,
+      title: formData.title || formData.restaurant, // fallback to restaurant name
       specialties,
     }
 
@@ -149,27 +150,15 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Dish/Item Title</label>
-              <Input
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="e.g. Nasi Jamblang"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Restaurant Name</label>
-              <Input
-                name="restaurant"
-                value={formData.restaurant}
-                onChange={handleInputChange}
-                placeholder="e.g. Warung Nasi Jamblang Bu Eti"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Restaurant Name</label>
+            <Input
+              name="restaurant"
+              value={formData.restaurant}
+              onChange={handleInputChange}
+              placeholder="e.g. Warung Sederhana Karawang"
+              required
+            />
           </div>
 
           <div>
@@ -331,11 +320,13 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
               </div>
               <div className="p-4">
                 <h3 className="text-xl font-bold mb-1 line-clamp-2">
-                  {formData.title || "Dish Title"}
+                  {formData.restaurant || "Restaurant Name"}
                 </h3>
-                <p className="text-sm text-gray-600 flex items-center gap-1 mb-3">
-                  🍴 {formData.restaurant || "Restaurant Name"}
-                </p>
+                {formData.title && (
+                  <p className="text-sm text-gray-600 flex items-center gap-1 mb-3">
+                    🍴 {formData.title}
+                  </p>
+                )}
                 <p className="text-sm text-gray-700 mb-4 line-clamp-2">
                   {formData.description || "Culinary description will appear here..."}
                 </p>
