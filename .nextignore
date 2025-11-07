@@ -1,0 +1,17 @@
+# NextJS Build Configuration
+
+# Ignore these directories for faster builds
+.next/
+node_modules/
+public/uploads/
+
+# Environment files
+.env.local
+.env.production
+
+# PM2 logs
+logs/
+
+# Database backups
+*.sql
+backups/

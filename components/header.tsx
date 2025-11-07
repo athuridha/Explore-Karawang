@@ -13,7 +13,7 @@ export function Header() {
         {/* Logo */}
         <a href="/">
         <div className="flex items-center gap-2 min-w-0 z-10">
-            <Navigation className="h-5 w-5 md:h-6 md:w-6 text-emerald-600 flex-shrink-0" />
+            <img src="/logogram.png" alt="Explore Karawang Logo" className="h-10 w-10 object-contain" />
             <span className="text-base md:text-xl font-bold truncate">Explore Karawang</span>
           </div>
         </a>
