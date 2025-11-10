@@ -118,7 +118,7 @@ export function CulinarySection() {
         <div className="text-center mb-8 mx-4 md:mx-6">
           <h2 className="text-3xl font-bold mb-4">Top Culinary Experiences</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-            Discover the finest restaurants and traditional cuisine that showcase Karawang's diverse flavors and culinary heritage
+            Discover the finest restaurants and traditional cuisine that showcase Karawang&apos;s diverse flavors and culinary heritage
           </p>
 
           {/* Search Bar */}
