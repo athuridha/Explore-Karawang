@@ -10,7 +10,7 @@
 2. **Clone repository**
    ```bash
    cd ~
-   git clone https://github.com/yourusername/explore-karawang.git htdocs
+   git clone https://github.com/athuridha/Explore-Karawang.git htdocs
    cd htdocs
    ```
 

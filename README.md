@@ -30,8 +30,8 @@ A modern web application to discover tourist destinations and culinary spots in 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/explore-karawang.git
-   cd explore-karawang
+   git clone https://github.com/athuridha/Explore-Karawang.git
+   cd Explore-Karawang
    ```
 
 2. **Install dependencies**
