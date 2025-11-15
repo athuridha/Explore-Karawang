@@ -34,3 +34,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PM2 logs
+logs/
+*.log
+
+# uploads (comment out if you want to track uploads)
+# public/uploads/
+
+# OS
+Thumbs.db
+.DS_Store

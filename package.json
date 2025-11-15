@@ -6,12 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "start:production": "NODE_ENV=production node server.js",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop explore-karawang",
     "pm2:restart": "pm2 restart explore-karawang",
     "pm2:logs": "pm2 logs explore-karawang",
     "pm2:status": "pm2 status",
+    "pm2:delete": "pm2 delete explore-karawang",
     "lint": "eslint ."
   },
   "dependencies": {
