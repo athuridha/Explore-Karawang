@@ -27,7 +27,6 @@ interface FormData {
   facilities: string[]
   bestTimeToVisit: string
   entranceFee: string
-  rating: number
   googleMapsLink: string
 }
 
@@ -45,7 +44,6 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
     facilities: [],
     bestTimeToVisit: "",
     entranceFee: "",
-    rating: 4.5,
     googleMapsLink: "",
   })
   const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
@@ -93,7 +91,6 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
         facilities: d.facilities || [],
         bestTimeToVisit: d.best_time_to_visit || "",
         entranceFee: d.entrance_fee || "",
-        rating: d.rating,
         googleMapsLink: d.google_maps_link || "",
       })
     } else {
@@ -106,7 +103,7 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "rating" ? Number.parseFloat(value) : value,
+      [name]: value,
     }))
   }
 
@@ -268,7 +265,7 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Best Time to Visit</label>
               <Input
@@ -285,18 +282,6 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
                 value={formData.entranceFee}
                 onChange={handleInputChange}
                 placeholder="e.g. Rp 10.000 - Rp 25.000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Rating</label>
-              <Input
-                type="number"
-                name="rating"
-                value={formData.rating}
-                onChange={handleInputChange}
-                min="0"
-                max="5"
-                step="0.1"
               />
             </div>
           </div>
@@ -392,10 +377,6 @@ export function DestinationForm({ destinationId }: DestinationFormProps) {
                       <span className="text-gray-600">{formData.entranceFee}</span>
                     </div>
                   )}
-                  <div>
-                    <span className="font-medium">Rating:</span>{" "}
-                    <span className="text-yellow-600">⭐ {Number(formData.rating).toFixed(1)}</span>
-                  </div>
                 </div>
 
                 <button className="w-full mt-4 bg-gray-100 border text-gray-700 py-2 px-4 rounded text-sm">

@@ -12,7 +12,6 @@ export interface CulinaryInput {
   priceRange: string
   openingHours: string
   specialties: string[]
-  rating: number
   category: string // dynamic
   googleMapsLink?: string
   categoryId?: string
@@ -23,8 +22,8 @@ export async function addCulinary(data: CulinaryInput) {
   try {
     const id = crypto.randomUUID()
     await query(
-      `INSERT INTO culinary (id, title, description, image, restaurant, location, price_range, opening_hours, specialties, rating, category, google_maps_link, category_id, facilities)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO culinary (id, title, description, image, restaurant, location, price_range, opening_hours, specialties, category, google_maps_link, category_id, facilities)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.title,
@@ -35,7 +34,6 @@ export async function addCulinary(data: CulinaryInput) {
         data.priceRange,
         data.openingHours,
         JSON.stringify(data.specialties ?? []),
-        data.rating,
         data.category,
         data.googleMapsLink || null,
         data.categoryId || null,
@@ -54,7 +52,7 @@ export async function updateCulinary(id: string, data: CulinaryInput) {
   try {
     await query(
       `UPDATE culinary
-         SET title=?, description=?, image=?, restaurant=?, location=?, price_range=?, opening_hours=?, specialties=?, rating=?, category=?, google_maps_link=?, category_id=?, facilities=?
+         SET title=?, description=?, image=?, restaurant=?, location=?, price_range=?, opening_hours=?, specialties=?, category=?, google_maps_link=?, category_id=?, facilities=?
        WHERE id=?`,
       [
         data.title,
@@ -65,7 +63,6 @@ export async function updateCulinary(id: string, data: CulinaryInput) {
         data.priceRange,
         data.openingHours,
         JSON.stringify(data.specialties ?? []),
-        data.rating,
         data.category,
         data.googleMapsLink || null,
         data.categoryId || null,
@@ -92,8 +89,28 @@ export async function deleteCulinary(id: string) {
 
 export async function getCulinaryItems() {
   try {
-    const rows = await query<any>("SELECT * FROM culinary ORDER BY created_at DESC")
-    const normalized = rows.map(r => ({ ...r, specialties: safeParseJson(r.specialties), facilities: safeParseJson(r.facilities) }))
+    const rows = await query<any>(`
+      SELECT c.*, 
+        COALESCE(r.avg_rating, 0) as avg_rating,
+        COALESCE(r.ratings_count, 0) as ratings_count
+      FROM culinary c
+      LEFT JOIN (
+        SELECT item_id, 
+          ROUND(AVG(rating), 2) as avg_rating,
+          COUNT(*) as ratings_count
+        FROM ratings 
+        WHERE item_type = 'culinary' AND visible = TRUE
+        GROUP BY item_id
+      ) r ON c.id = r.item_id
+      ORDER BY c.created_at DESC
+    `)
+    const normalized = rows.map(r => ({ 
+      ...r, 
+      specialties: safeParseJson(r.specialties), 
+      facilities: safeParseJson(r.facilities),
+      avg_rating: Number(r.avg_rating) || 0,
+      ratings_count: Number(r.ratings_count) || 0,
+    }))
     return { success: true, data: normalized }
   } catch (error) {
     return { success: false, error: String(error) }

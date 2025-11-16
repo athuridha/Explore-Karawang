@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Slider } from "@/components/ui/slider"
 import { addCulinary, updateCulinary, getCulinaryById } from "@/app/actions/culinary"
 import { getCategories } from "@/app/actions/categories"
 import { getFacilityPresets } from "@/app/actions/facilities"
@@ -28,7 +29,6 @@ interface FormData {
   openingHours: string
   specialties: string[]
   facilities: string[]
-  rating: number
   category: string
   googleMapsLink: string
 }
@@ -48,13 +48,16 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
     openingHours: "",
     specialties: [],
     facilities: [],
-    rating: 4.5,
     category: "",
     googleMapsLink: "",
   })
   const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([])
   const [catLoading, setCatLoading] = React.useState(true)
   const [availableFacilities, setAvailableFacilities] = React.useState<string[]>([])
+  const [priceMin, setPriceMin] = React.useState(10000)
+  const [priceMax, setPriceMax] = React.useState(200000)
+  const [openHour, setOpenHour] = React.useState(8)
+  const [closeHour, setCloseHour] = React.useState(22)
 
   const [specialtiesInput, setSpecialtiesInput] = React.useState("")
 
@@ -90,6 +93,23 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
     const result = await getCulinaryById(culinaryId)
     if (result.success && result.data) {
       const d = result.data
+      // Parse existing price range
+      if (d.price_range) {
+        const priceMatch = d.price_range.match(/Rp\.?\s*([\d.]+).*?Rp\.?\s*([\d.]+)/i)
+        if (priceMatch) {
+          setPriceMin(parseInt(priceMatch[1].replace(/\./g, '')))
+          setPriceMax(parseInt(priceMatch[2].replace(/\./g, '')))
+        }
+      }
+      // Parse existing opening hours
+      if (d.opening_hours) {
+        const hourMatch = d.opening_hours.match(/(\d+).*?(\d+)/)
+        if (hourMatch) {
+          setOpenHour(parseInt(hourMatch[1]))
+          setCloseHour(parseInt(hourMatch[2]))
+        }
+      }
+      
       setFormData({
         title: d.title,
         description: d.description,
@@ -100,7 +120,6 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
         openingHours: d.opening_hours || "",
         specialties: d.specialties || [],
         facilities: d.facilities || [],
-        rating: d.rating,
         category: d.category,
         googleMapsLink: d.google_maps_link || "",
       })
@@ -115,13 +134,31 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "rating" ? Number.parseFloat(value) : value,
+      [name]: value,
     }))
   }
 
   const handleCategoryChange = (value: string) => {
     setFormData(prev => ({ ...prev, category: value }))
   }
+
+  const formatPrice = (val: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
+  }
+
+  const formatTime = (hour: number) => {
+    const period = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+    return `${displayHour}:00 ${period}`
+  }
+
+  React.useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      priceRange: `${formatPrice(priceMin)} - ${formatPrice(priceMax)}`,
+      openingHours: `Daily, ${formatTime(openHour)} - ${formatTime(closeHour)}`
+    }))
+  }, [priceMin, priceMax, openHour, closeHour])
 
   const handleFacilityToggle = (facility: string) => {
     setFormData(prev => ({
@@ -249,12 +286,28 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Price Range</label>
-              <Input
-                name="priceRange"
-                value={formData.priceRange}
-                onChange={handleInputChange}
-                placeholder="e.g. Rp 25.000 - Rp 40.000"
-              />
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-muted-foreground">Min: {formatPrice(priceMin)}</span>
+                    <span className="text-muted-foreground">Max: {formatPrice(priceMax)}</span>
+                  </div>
+                  <Slider
+                    min={5000}
+                    max={1000000}
+                    step={5000}
+                    value={[priceMin, priceMax]}
+                    onValueChange={([min, max]) => {
+                      setPriceMin(min)
+                      setPriceMax(max)
+                    }}
+                    className="w-full"
+                  />
+                </div>
+                <div className="text-sm font-medium text-emerald-700 bg-emerald-50 p-2 rounded">
+                  {formData.priceRange || 'Set price range'}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -273,12 +326,28 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
 
           <div>
             <label className="block text-sm font-medium mb-2">Opening Hours</label>
-            <Input
-              name="openingHours"
-              value={formData.openingHours}
-              onChange={handleInputChange}
-              placeholder="e.g. Daily, 10:00 AM - 8:00 PM"
-            />
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Open: {formatTime(openHour)}</span>
+                  <span className="text-muted-foreground">Close: {formatTime(closeHour)}</span>
+                </div>
+                <Slider
+                  min={0}
+                  max={23}
+                  step={1}
+                  value={[openHour, closeHour]}
+                  onValueChange={([open, close]) => {
+                    setOpenHour(open)
+                    setCloseHour(close)
+                  }}
+                  className="w-full"
+                />
+              </div>
+              <div className="text-sm font-medium text-blue-700 bg-blue-50 p-2 rounded">
+                {formData.openingHours || 'Set opening hours'}
+              </div>
+            </div>
           </div>
 
           <div>
@@ -312,19 +381,6 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
                 ))}
               </div>
             )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Rating</label>
-            <Input
-              type="number"
-              name="rating"
-              value={formData.rating}
-              onChange={handleInputChange}
-              min="0"
-              max="5"
-              step="0.1"
-            />
           </div>
 
           <div className="flex gap-4">
@@ -368,11 +424,6 @@ export function CulinaryForm({ culinaryId }: CulinaryFormProps) {
                     No image
                   </div>
                 )}
-                {/* Rating Badge */}
-                <div className="absolute top-2 right-2 bg-white rounded-full px-2 py-1 flex items-center gap-1 text-sm font-medium shadow">
-                  <span className="text-yellow-400">⭐</span>
-                  {Number(formData.rating).toFixed(1)}
-                </div>
                 {/* Category Badge */}
                 {formData.category && (
                   <div className="absolute top-2 left-2 bg-emerald-600 text-white rounded-full px-2 py-1 text-xs font-medium capitalize">

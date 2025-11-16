@@ -111,6 +111,55 @@ CREATE TABLE IF NOT EXISTS facility_presets (
   KEY idx_facility_type (type)
 ) COMMENT 'Predefined facilities/amenities for quick selection';
 
+-- ============================================
+-- 6. OWNER SUBMISSIONS (Community contributed content)
+-- ============================================
+-- Users / owners can submit a destination or culinary place.
+-- Admin must approve before it is inserted into main tables.
+
+CREATE TABLE IF NOT EXISTS owner_submissions (
+  id CHAR(36) NOT NULL PRIMARY KEY,
+  submitter_name VARCHAR(100) NOT NULL,
+  submitter_email VARCHAR(150),
+  submitter_phone VARCHAR(50),
+  item_type ENUM('destination','culinary') NOT NULL,
+  payload TEXT NOT NULL COMMENT 'JSON string of submitted fields',
+  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  admin_notes TEXT,
+  approved_at DATETIME NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_owner_submissions_status (status),
+  KEY idx_owner_submissions_type (item_type)
+);
+
+-- ============================================
+-- 7. RATINGS & REVIEWS
+-- ============================================
+-- Stores per-device ratings & optional comment/media. One rating per device per item.
+
+CREATE TABLE IF NOT EXISTS ratings (
+  id CHAR(36) NOT NULL PRIMARY KEY,
+  item_type ENUM('destination','culinary') NOT NULL,
+  item_id CHAR(36) NOT NULL,
+  device_id CHAR(64) NOT NULL,
+  ip_address VARCHAR(45),
+  user_agent VARCHAR(255),
+  rating TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT,
+  media VARCHAR(2048) DEFAULT '[]' COMMENT 'JSON array of media URLs',
+  visible BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_rating_device (item_type, item_id, device_id),
+  KEY idx_ratings_item (item_type, item_id),
+  KEY idx_ratings_visible (visible)
+);
+
+-- Helper view (optional): average rating per item (only visible ones)
+CREATE OR REPLACE VIEW item_average_ratings AS
+SELECT item_type, item_id, ROUND(AVG(rating),2) AS avg_rating, COUNT(*) AS ratings_count
+FROM ratings WHERE visible = TRUE GROUP BY item_type, item_id;
+
 INSERT INTO users (id, email, password_hash, username, role)
 VALUES ('da15105e-9f0b-475e-b326-14907ec3454e', 'admin@explorekarawang.com', '$2a$10$.0u1G0RdWq3v0TYHbvy7QeSqh2WQlkGnGr2nf6KUxjY.Lhz9m67LO', 'admin', 'admin')
 ON DUPLICATE KEY UPDATE password_hash=VALUES(password_hash), role='admin';

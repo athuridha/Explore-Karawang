@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { MapPin, ArrowUpRight, Star, Clock, DollarSign, Wifi, ParkingCircle, Utensils } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,7 @@ function getFacilityIcon(facility: string): React.ReactNode {
 }
 
 export function DestinationCard({ 
+  id,
   title, 
   description, 
   image, 
@@ -40,8 +42,10 @@ export function DestinationCard({
   googleMapsLink, 
   facilities, 
   bestTimeToVisit, 
-  entranceFee 
-}: DestinationProps) {
+  entranceFee,
+  avg_rating = 0,
+  ratings_count = 0
+}: DestinationProps & { id: string }) {
   const [open, setOpen] = React.useState(false)
 
   const handleGetDirections = () => {
@@ -50,8 +54,15 @@ export function DestinationCard({
     }
   }
 
-  // Use facilities dari props, atau set default kosong (tidak hardcoded)
-  const displayFacilities = facilities && facilities.length > 0 ? facilities : []
+  // Parse facilities - handle both string CSV and array formats
+  const displayFacilities = React.useMemo(() => {
+    if (!facilities) return []
+    if (Array.isArray(facilities)) return facilities
+    if (typeof facilities === 'string') {
+      return (facilities as string).split(',').map((f: string) => f.trim()).filter((f: string) => f.length > 0)
+    }
+    return []
+  }, [facilities])
 
   return (
     <>
@@ -66,10 +77,15 @@ export function DestinationCard({
           />
           {/* Overlay Badge */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            4.8
-          </div>
+          {avg_rating > 0 && (
+            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              {Number(avg_rating).toFixed(1)}
+              {ratings_count > 0 && (
+                <span className="text-xs text-gray-600 ml-1">({ratings_count})</span>
+              )}
+            </div>
+          )}
         </div>
 
         <CardContent className="flex-1 p-5 flex flex-col">
@@ -110,7 +126,7 @@ export function DestinationCard({
           {/* Facilities Preview */}
           {displayFacilities.length > 0 && (
             <div className="flex gap-2 mb-4 flex-wrap">
-              {displayFacilities.slice(0, 3).map((facility, index) => (
+              {displayFacilities.slice(0, 3).map((facility: string, index: number) => (
                 <div
                   key={index}
                   className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition-colors"
@@ -123,16 +139,14 @@ export function DestinationCard({
           )}
 
           {/* Action Button */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen(true)
-            }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
-          >
-            View Details
-            <ArrowUpRight className="h-4 w-4 ml-2" />
-          </Button>
+          <Link href={`/destinations/${id}`} className="w-full">
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
+            >
+              View Details
+              <ArrowUpRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
@@ -194,7 +208,7 @@ export function DestinationCard({
                   Available Facilities
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {displayFacilities.map((facility, index) => (
+                  {displayFacilities.map((facility: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
@@ -217,24 +231,12 @@ export function DestinationCard({
             >
               Close
             </Button>
-            {googleMapsLink ? (
-              <a
-                href={googleMapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Get Directions
-                </Button>
-              </a>
-            ) : (
-              <Button className="flex-1 bg-emerald-600" disabled>
-                <MapPin className="h-4 w-4 mr-2" />
-                Get Directions
+            <Link href={`/destinations/${id}`} className="flex-1">
+              <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
+                View Full Details
+                <ArrowUpRight className="h-4 w-4 ml-2" />
               </Button>
-            )}
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>

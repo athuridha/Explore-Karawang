@@ -14,6 +14,7 @@ import {
   Tags,
   ChevronDown,
   Settings,
+  Star,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -49,6 +50,11 @@ const navItems: NavItem[] = [
         label: "Categories",
         icon: <Tags className="w-4 h-4" />,
       },
+      {
+        href: "/admin/destinations/submissions",
+        label: "Submissions",
+        icon: <MapPin className="w-4 h-4" />,
+      },
     ],
   },
   {
@@ -65,7 +71,17 @@ const navItems: NavItem[] = [
         label: "Categories",
         icon: <Tags className="w-4 h-4" />,
       },
+      {
+        href: "/admin/culinary/submissions",
+        label: "Submissions",
+        icon: <UtensilsCrossed className="w-4 h-4" />,
+      },
     ],
+  },
+  {
+    href: "/admin/ratings",
+    label: "Ratings & Reviews",
+    icon: <Star className="w-5 h-5" />,
   },
   {
     href: "/admin/settings",

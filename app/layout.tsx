@@ -10,12 +10,16 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/logogram.png",
-        sizes: "any",
-        type: "image/png",
+        url: "/favicon.ico",
+        type: "image/x-icon",
       },
     ],
-    shortcut: "/logogram.png",
+    shortcut: [
+      {
+        url: "/logogram.png",
+        type: "image/png",
+        sizes: "32x32",},
+    ],
     apple: {
       url: "/logogram.png",
       sizes: "180x180",

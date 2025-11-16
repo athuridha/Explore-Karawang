@@ -19,15 +19,17 @@ interface CulinaryItem {
   description: string
   image: string
   restaurant: string
-  rating: number
   category: string
   location: string
   price_range: string
   opening_hours: string
   specialties: string[]
+  facilities?: string[]
   created_at: string
   updated_at: string
   google_maps_link?: string
+  avg_rating: number
+  ratings_count: number
 }
 
 export default function CulinaryPage() {
@@ -74,7 +76,7 @@ export default function CulinaryPage() {
     const matchesCategory = categoryFilter === "all" || item.category === categoryFilter
 
     // Rating filter
-    const matchesRating = item.rating >= ratingFilter[0]
+    const matchesRating = item.avg_rating >= ratingFilter[0]
 
     return matchesSearch && matchesCategory && matchesRating
   })
@@ -255,16 +257,19 @@ export default function CulinaryPage() {
                 {filteredItems.map((item) => (
                   <CulinaryCard
                     key={item.id}
+                    id={item.id}
                     title={item.title}
                     description={item.description}
                     image={item.image}
                     restaurant={item.restaurant}
-                    rating={item.rating}
+                    avg_rating={item.avg_rating}
+                    ratings_count={item.ratings_count}
                     category={item.category}
                     location={item.location}
                     priceRange={item.price_range}
                     openingHours={item.opening_hours}
                     specialties={item.specialties}
+                    facilities={item.facilities}
                     googleMapsLink={item.google_maps_link}
                   />
                 ))}

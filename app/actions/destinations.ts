@@ -12,7 +12,6 @@ export interface DestinationInput {
   facilities: string[]
   bestTimeToVisit: string
   entranceFee: string
-  rating: number
   googleMapsLink?: string
   categoryId?: string // optional reference to categories table
 }
@@ -21,8 +20,8 @@ export async function addDestination(data: DestinationInput) {
   try {
     const id = crypto.randomUUID()
     await query(
-      `INSERT INTO destinations (id, title, description, image, location, category, facilities, best_time_to_visit, entrance_fee, rating, google_maps_link, category_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO destinations (id, title, description, image, location, category, facilities, best_time_to_visit, entrance_fee, google_maps_link, category_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.title,
@@ -33,7 +32,6 @@ export async function addDestination(data: DestinationInput) {
         JSON.stringify(data.facilities ?? []),
         data.bestTimeToVisit,
         data.entranceFee,
-        data.rating,
         data.googleMapsLink || null,
         data.categoryId || null,
       ]
@@ -53,7 +51,7 @@ export async function updateDestination(id: string, data: DestinationInput) {
   try {
     await query(
       `UPDATE destinations
-         SET title=?, description=?, image=?, location=?, category=?, facilities=?, best_time_to_visit=?, entrance_fee=?, rating=?, google_maps_link=?, category_id=?
+         SET title=?, description=?, image=?, location=?, category=?, facilities=?, best_time_to_visit=?, entrance_fee=?, google_maps_link=?, category_id=?
        WHERE id=?`,
       [
         data.title,
@@ -64,7 +62,6 @@ export async function updateDestination(id: string, data: DestinationInput) {
         JSON.stringify(data.facilities ?? []),
         data.bestTimeToVisit,
         data.entranceFee,
-        data.rating,
         data.googleMapsLink || null,
         data.categoryId || null,
         id,
@@ -92,10 +89,26 @@ export async function deleteDestination(id: string) {
 
 export async function getDestinations() {
   try {
-    const rows = await query<any>("SELECT * FROM destinations ORDER BY created_at DESC")
+    const rows = await query<any>(`
+      SELECT d.*, 
+        COALESCE(r.avg_rating, 0) as avg_rating,
+        COALESCE(r.ratings_count, 0) as ratings_count
+      FROM destinations d
+      LEFT JOIN (
+        SELECT item_id, 
+          ROUND(AVG(rating), 2) as avg_rating,
+          COUNT(*) as ratings_count
+        FROM ratings 
+        WHERE item_type = 'destination' AND visible = TRUE
+        GROUP BY item_id
+      ) r ON d.id = r.item_id
+      ORDER BY d.created_at DESC
+    `)
     const normalized = rows.map(r => ({
       ...r,
       facilities: safeParseJson(r.facilities),
+      avg_rating: Number(r.avg_rating) || 0,
+      ratings_count: Number(r.ratings_count) || 0,
     }))
     return { success: true, data: normalized }
   } catch (error) {

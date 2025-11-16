@@ -144,6 +144,7 @@ export function DestinationsSection() {
               topDestinations.map(destination => (
                 <DestinationCard
                   key={destination.id}
+                  id={destination.id}
                   title={destination.title}
                   description={destination.description}
                   image={destination.image}
@@ -152,6 +153,8 @@ export function DestinationsSection() {
                   facilities={destination.facilities}
                   bestTimeToVisit={destination.best_time_to_visit}
                   entranceFee={destination.entrance_fee}
+                  avg_rating={destination.avg_rating}
+                  ratings_count={destination.ratings_count}
                 />
               ))
             ) : (

@@ -17,6 +17,11 @@ A modern web application to discover tourist destinations and culinary spots in 
 - 🗺️ **Google Maps Integration** - Direct links to locations
 - 🎯 **Category Management** - Organize content by categories
 - ⭐ **Ratings & Reviews** - Display ratings for destinations and restaurants
+ - 📨 **Owner / Community Submissions** - Pengunjung atau pemilik bisa mengajukan destinasi / tempat kuliner untuk ditinjau admin
+ - ✅ **Admin Approval Workflow** - Admin menyetujui / menolak pengajuan sebelum tampil publik
+ - 🌟 **Per-Device Rating Limiter** - Setiap device hanya bisa memberi rating 1x per item (dengan deteksi device cookie)
+ - 👀 **Rating Visibility Control** - Admin dapat menyembunyikan / menampilkan rating tertentu
+ - 📎 **Media in Reviews (Extensible)** - Struktur siap untuk lampiran media (URL hasil upload)
 
 ## 🚀 Quick Start (Development)
 
@@ -179,6 +184,8 @@ npm run lint             # Run ESLint
 - `carousel` - Homepage carousel images
 - `facilities` - Facilities management
 - `users` - Admin users
+ - `owner_submissions` - Menyimpan pengajuan destinasi / kuliner yang menunggu persetujuan
+ - `ratings` - Menyimpan rating & komentar per device per item (visibility toggle)
 
 See SQL files in `scripts/` for detailed schema.
 

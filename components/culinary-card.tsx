@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import * as React from "react"
 import { ExternalLink, Star, Utensils, MapPin, Clock, DollarSign, Flame, ArrowUpRight, Check } from "lucide-react"
 
@@ -15,11 +16,11 @@ import {
 import type { CulinaryProps } from "@/types"
 
 export function CulinaryCard({
+  id,
   title,
   description,
   image,
   restaurant,
-  rating,
   category,
   location,
   priceRange,
@@ -27,7 +28,9 @@ export function CulinaryCard({
   specialties,
   googleMapsLink,
   facilities,
-}: CulinaryProps) {
+  avg_rating = 0,
+  ratings_count = 0,
+}: CulinaryProps & { id: string }) {
   const [open, setOpen] = React.useState(false)
 
   const handleFindRestaurant = () => {
@@ -36,8 +39,24 @@ export function CulinaryCard({
     }
   }
 
-  // Use facilities dari props, atau set default kosong (tidak hardcoded)
-  const displayFacilities = facilities && facilities.length > 0 ? facilities : []
+  // Parse facilities and specialties - handle both string CSV and array formats
+  const displayFacilities = React.useMemo(() => {
+    if (!facilities) return []
+    if (Array.isArray(facilities)) return facilities
+    if (typeof facilities === 'string') {
+      return (facilities as string).split(',').map((f: string) => f.trim()).filter((f: string) => f.length > 0)
+    }
+    return []
+  }, [facilities])
+
+  const displaySpecialties = React.useMemo(() => {
+    if (!specialties) return []
+    if (Array.isArray(specialties)) return specialties
+    if (typeof specialties === 'string') {
+      return (specialties as string).split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
+    }
+    return []
+  }, [specialties])
 
   return (
     <>
@@ -54,10 +73,15 @@ export function CulinaryCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           
           {/* Rating Badge */}
-          <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            {rating || 4.5}
-          </div>
+          {avg_rating > 0 && (
+            <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 text-sm font-semibold text-gray-900 shadow-lg">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              {Number(avg_rating).toFixed(1)}
+              {ratings_count > 0 && (
+                <span className="text-xs text-gray-600 ml-1">({ratings_count})</span>
+              )}
+            </div>
+          )}
 
           {/* Category Badge */}
           {category && (
@@ -109,9 +133,9 @@ export function CulinaryCard({
           </div>
 
           {/* Specialties Preview */}
-          {specialties && specialties.length > 0 && (
+          {displaySpecialties.length > 0 && (
             <div className="flex gap-2 mb-4 flex-wrap">
-              {specialties.slice(0, 2).map((specialty, index) => (
+              {displaySpecialties.slice(0, 2).map((specialty: string, index: number) => (
                 <div
                   key={index}
                   className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2.5 py-1.5 rounded-lg hover:bg-red-200 transition-colors"
@@ -123,17 +147,30 @@ export function CulinaryCard({
             </div>
           )}
 
+          {/* Facilities Preview */}
+          {displayFacilities.length > 0 && (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {displayFacilities.slice(0, 3).map((facility: string, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-1 text-xs bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <Check className="h-3 w-3" />
+                  <span className="line-clamp-1">{facility}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Action Button */}
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              setOpen(true)
-            }}
-            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
-          >
-            View Details
-            <ArrowUpRight className="h-4 w-4 ml-2" />
-          </Button>
+          <Link href={`/culinary/${id}`} className="w-full">
+            <Button
+              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
+            >
+              View Details
+              <ArrowUpRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
@@ -188,7 +225,7 @@ export function CulinaryCard({
             </div>
 
             {/* Category & Rating */}
-            {(category || rating) && (
+            {(category || avg_rating > 0) && (
               <div className="grid grid-cols-2 gap-4">
                 {category && (
                   <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
@@ -199,35 +236,15 @@ export function CulinaryCard({
                     <p className="text-sm text-gray-700 capitalize font-medium">{category}</p>
                   </div>
                 )}
-                {rating && (
+                {avg_rating > 0 && (
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Star className="h-5 w-5 text-yellow-600 fill-yellow-600" />
                       <h4 className="font-semibold text-gray-900">Rating</h4>
                     </div>
-                    <p className="text-sm text-gray-700 font-medium">{rating} / 5.0</p>
+                    <p className="text-sm text-gray-700 font-medium">{Number(avg_rating).toFixed(1)} / 5.0 ({ratings_count} {ratings_count === 1 ? 'review' : 'reviews'})</p>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Specialties */}
-            {specialties && specialties.length > 0 && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-orange-600" />
-                  Specialties
-                </h4>
-                <div className="flex gap-2 flex-wrap">
-                  {specialties.map((specialty, index) => (
-                    <div
-                      key={index}
-                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200 hover:border-red-400 transition-all"
-                    >
-                      <p className="text-sm text-gray-700 font-medium">{specialty}</p>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -239,7 +256,7 @@ export function CulinaryCard({
                   Available Facilities
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {displayFacilities.map((facility, index) => (
+                  {displayFacilities.map((facility: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
@@ -251,7 +268,28 @@ export function CulinaryCard({
                 </div>
               </div>
             )}
+
+            {/* Specialties */}
+            {displaySpecialties.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-orange-600" />
+                  Specialties
+                </h4>
+                <div className="flex gap-2 flex-wrap">
+                  {displaySpecialties.map((specialty: string, index: number) => (
+                    <div
+                      key={index}
+                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200 hover:border-red-400 transition-all"
+                    >
+                      <p className="text-sm text-gray-700 font-medium">{specialty}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
 
           {/* Footer with CTA */}
           <DialogFooter className="flex gap-2">
@@ -262,24 +300,12 @@ export function CulinaryCard({
             >
               Close
             </Button>
-            {googleMapsLink ? (
-              <a
-                href={googleMapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1"
-              >
-                <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Find Restaurant
-                </Button>
-              </a>
-            ) : (
-              <Button className="flex-1 bg-emerald-600" disabled>
-                <MapPin className="h-4 w-4 mr-2" />
-                Find Restaurant
+            <Link href={`/culinary/${id}`} className="flex-1">
+              <Button className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold">
+                View Full Details
+                <ArrowUpRight className="h-4 w-4 ml-2" />
               </Button>
-            )}
+            </Link>
           </DialogFooter>
         </DialogContent>
       </Dialog>

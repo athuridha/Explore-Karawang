@@ -53,7 +53,24 @@ export function AdminCulinaryCardPreview({
 }: AdminCulinaryCardPreviewProps) {
   const [open, setOpen] = React.useState(false)
 
-  const displayFacilities = facilities && facilities.length > 0 ? facilities : []
+  // Parse facilities and specialties - handle both string CSV and array formats
+  const displayFacilities = React.useMemo(() => {
+    if (!facilities) return []
+    if (Array.isArray(facilities)) return facilities
+    if (typeof facilities === 'string') {
+      return facilities.split(',').map(f => f.trim()).filter(f => f.length > 0)
+    }
+    return []
+  }, [facilities])
+
+  const displaySpecialties = React.useMemo(() => {
+    if (!specialties) return []
+    if (Array.isArray(specialties)) return specialties
+    if (typeof specialties === 'string') {
+      return specialties.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    }
+    return []
+  }, [specialties])
 
   return (
     <>
@@ -111,9 +128,9 @@ export function AdminCulinaryCardPreview({
           </p>
 
           {/* Specialties & Facilities Preview */}
-          {(specialties.length > 0 || displayFacilities.length > 0) && (
+          {(displaySpecialties.length > 0 || displayFacilities.length > 0) && (
             <div className="flex gap-1 mb-3 flex-wrap">
-              {specialties.slice(0, 1).map((specialty, index) => (
+              {displaySpecialties.slice(0, 1).map((specialty, index) => (
                 <div
                   key={`sp-${index}`}
                   className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-lg font-medium"
@@ -130,9 +147,9 @@ export function AdminCulinaryCardPreview({
                   {facility}
                 </div>
               ))}
-              {(specialties.length + displayFacilities.length > 2) && (
+              {(displaySpecialties.length + displayFacilities.length > 2) && (
                 <div className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">
-                  +{specialties.length + displayFacilities.length - 2} more
+                  +{displaySpecialties.length + displayFacilities.length - 2} more
                 </div>
               )}
             </div>
@@ -243,26 +260,6 @@ export function AdminCulinaryCardPreview({
               </div>
             )}
 
-            {/* Specialties */}
-            {specialties && specialties.length > 0 && (
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Flame className="h-5 w-5 text-orange-600" />
-                  Specialties
-                </h4>
-                <div className="flex gap-2 flex-wrap">
-                  {specialties.map((specialty, index) => (
-                    <div
-                      key={index}
-                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200"
-                    >
-                      <p className="text-sm text-gray-700 font-medium">{specialty}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Facilities */}
             {displayFacilities.length > 0 && (
               <div>
@@ -274,10 +271,30 @@ export function AdminCulinaryCardPreview({
                   {displayFacilities.map((facility, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200"
+                      className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
                     >
                       <Check className="h-4 w-4 text-emerald-600" />
                       <span className="text-sm text-gray-700">{facility}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Specialties */}
+            {displaySpecialties.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-orange-600" />
+                  Specialties
+                </h4>
+                <div className="flex gap-2 flex-wrap">
+                  {displaySpecialties.map((specialty, index) => (
+                    <div
+                      key={index}
+                      className="bg-red-50 px-3 py-2 rounded-lg border border-red-200 hover:border-red-400 transition-all"
+                    >
+                      <p className="text-sm text-gray-700 font-medium">{specialty}</p>
                     </div>
                   ))}
                 </div>

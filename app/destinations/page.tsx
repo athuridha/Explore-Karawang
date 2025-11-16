@@ -20,11 +20,12 @@ interface Destination {
   image: string
   location: string
   category: "nature" | "historical" | "recreational"
-  rating: number
   google_maps_link?: string
   facilities?: string[]
   best_time_to_visit?: string
   entrance_fee?: string
+  avg_rating: number
+  ratings_count: number
 }
 
 export default function DestinationsPage() {
@@ -70,7 +71,7 @@ export default function DestinationsPage() {
     const matchesCategory = categoryFilter === "all" || destination.category === categoryFilter
 
     // Rating filter
-    const matchesRating = destination.rating >= ratingFilter[0]
+    const matchesRating = destination.avg_rating >= ratingFilter[0]
 
     return matchesSearch && matchesCategory && matchesRating
   })
@@ -251,6 +252,7 @@ export default function DestinationsPage() {
                 {filteredDestinations.map((destination) => (
                   <DestinationCard
                     key={destination.id}
+                    id={destination.id}
                     title={destination.title}
                     description={destination.description}
                     image={destination.image}
@@ -259,6 +261,8 @@ export default function DestinationsPage() {
                     facilities={destination.facilities}
                     bestTimeToVisit={destination.best_time_to_visit}
                     entranceFee={destination.entrance_fee}
+                    avg_rating={destination.avg_rating}
+                    ratings_count={destination.ratings_count}
                   />
                 ))}
               </div>

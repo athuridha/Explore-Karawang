@@ -18,12 +18,14 @@ interface CulinaryItem {
   image: string
   location: string
   category: string
-  rating?: number
   restaurant?: string
   google_maps_link?: string
   specialties?: string[]
+  facilities?: string[]
   opening_hours?: string
   price_range?: string
+  avg_rating: number
+  ratings_count: number
 }
 
 export function CulinarySection() {
@@ -147,16 +149,19 @@ export function CulinarySection() {
               topCulinary.map(item => (
                 <CulinaryCard
                   key={item.id}
+                  id={item.id}
                   title={item.title}
                   description={item.description}
                   image={item.image}
                   restaurant={item.restaurant || item.title}
-                  rating={item.rating || 0}
+                  avg_rating={item.avg_rating}
+                  ratings_count={item.ratings_count}
                   category={item.category}
                   location={item.location}
                   priceRange={item.price_range}
                   openingHours={item.opening_hours}
                   specialties={item.specialties}
+                  facilities={item.facilities}
                   googleMapsLink={item.google_maps_link}
                 />
               ))
